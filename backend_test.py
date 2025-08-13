@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Solar Monitoring Application Backend Test Suite
-Tests Laravel PHP application running on localhost:8000
+Tests Laravel PHP application OAuth authentication flows
+Focus: Enphase and Tesla OAuth callback routes and services
 """
 
 import requests
@@ -9,6 +10,7 @@ import sys
 import json
 from datetime import datetime
 import time
+import urllib.parse
 
 class SolarMonitoringTester:
     def __init__(self, base_url="http://localhost:8001"):
