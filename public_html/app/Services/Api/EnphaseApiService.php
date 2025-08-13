@@ -147,50 +147,36 @@ class EnphaseApiService
     public function testConnection()
     {
         try {
-            if (empty($this->apiKey)) {
+            if (empty($this->apiKey) || $this->apiKey === 'demo_key_67890') {
                 return [
                     'success' => false,
-                    'message' => 'Enphase API key not configured',
-                    'details' => null
+                    'message' => 'Enphase API key not configured. Please add valid ENPHASE_API_KEY, ENPHASE_CLIENT_ID, and ENPHASE_CLIENT_SECRET to your .env file.'
                 ];
             }
 
-            // Test with a simple systems request
-            $response = $this->makeRequest('/systems', [
-                'key' => $this->apiKey,
-                'limit' => 1
-            ]);
+            // For Enphase, we need OAuth authentication, not just an API key
+            // This is a simplified test - in production, you'd need proper OAuth flow
+            $response = $this->makeRequest('/systems');
             
             if ($response->successful()) {
                 $data = $response->json();
-                $systemCount = count($data['systems'] ?? []);
-                
+                $systemCount = is_array($data) ? count($data) : 0;
                 return [
                     'success' => true,
-                    'message' => "Successfully connected to Enphase API. Found {$systemCount} systems.",
-                    'details' => [
-                        'system_count' => $systemCount,
-                        'response_time_ms' => $response->transferStats?->getTransferTime() * 1000
-                    ]
+                    'message' => "Successfully connected to Enphase API. Found {$systemCount} accessible systems."
                 ];
             } else {
+                $errorData = $response->json();
+                $errorMessage = $errorData['message'] ?? 'Authentication failed';
                 return [
                     'success' => false,
-                    'message' => 'Enphase API request failed: ' . $response->status() . ' ' . $response->reason(),
-                    'details' => [
-                        'status_code' => $response->status(),
-                        'response_body' => $response->body()
-                    ]
+                    'message' => "Enphase API authentication failed: {$errorMessage}. Enphase requires OAuth 2.0 authentication. Please ensure your credentials are properly configured and authorized."
                 ];
             }
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Enphase API connection error: ' . $e->getMessage(),
-                'details' => [
-                    'exception' => get_class($e),
-                    'trace' => $e->getTraceAsString()
-                ]
+                'message' => "Enphase API connection error: " . $e->getMessage()
             ];
         }
     }
