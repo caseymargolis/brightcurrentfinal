@@ -170,48 +170,33 @@ class SolarEdgeApiService
     public function testConnection()
     {
         try {
-            if (empty($this->apiKey)) {
+            if (empty($this->apiKey) || $this->apiKey === 'demo_key_12345') {
                 return [
                     'success' => false,
-                    'message' => 'SolarEdge API key not configured',
-                    'details' => null
+                    'message' => 'SolarEdge API key not configured. Please add a valid SOLAREDGE_API_KEY to your .env file.'
                 ];
             }
 
-            // Test with a simple sites list request
-            $response = $this->makeRequest('/sites/list', ['size' => 1]);
+            $response = $this->makeRequest('/sites/list');
             
             if ($response->successful()) {
                 $data = $response->json();
-                $siteCount = $data['sites']['count'] ?? 0;
-                
+                $siteCount = isset($data['sites']) ? count($data['sites']) : 0;
                 return [
                     'success' => true,
-                    'message' => "Successfully connected to SolarEdge API. Found {$siteCount} sites.",
-                    'details' => [
-                        'api_version' => $data['sites']['version'] ?? null,
-                        'site_count' => $siteCount,
-                        'response_time_ms' => $response->transferStats?->getTransferTime() * 1000
-                    ]
+                    'message' => "Successfully connected to SolarEdge API. Found {$siteCount} accessible sites."
                 ];
             } else {
+                $error = $response->json()['String'] ?? 'Unknown error';
                 return [
                     'success' => false,
-                    'message' => 'SolarEdge API request failed: ' . $response->status() . ' ' . $response->reason(),
-                    'details' => [
-                        'status_code' => $response->status(),
-                        'response_body' => $response->body()
-                    ]
+                    'message' => "SolarEdge API authentication failed: {$error}. Please verify your API key has proper permissions."
                 ];
             }
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'SolarEdge API connection error: ' . $e->getMessage(),
-                'details' => [
-                    'exception' => get_class($e),
-                    'trace' => $e->getTraceAsString()
-                ]
+                'message' => "SolarEdge API connection error: " . $e->getMessage()
             ];
         }
     }
