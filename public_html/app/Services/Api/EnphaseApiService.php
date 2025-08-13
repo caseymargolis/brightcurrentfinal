@@ -11,15 +11,13 @@ use Carbon\Carbon;
 class EnphaseApiService
 {
     protected $apiKey;
-    protected $clientId;
-    protected $clientSecret;
+    protected $oauthService;
     protected $baseUrl;
 
     public function __construct()
     {
         $this->apiKey = config('solar.enphase.api_key');
-        $this->clientId = config('solar.enphase.client_id');
-        $this->clientSecret = config('solar.enphase.client_secret');
+        $this->oauthService = new EnphaseOAuthService();
         $this->baseUrl = 'https://api.enphaseenergy.com/api/v4';
     }
 
