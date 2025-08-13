@@ -112,11 +112,17 @@ class EnphaseApiService
      */
     protected function makeRequest(string $endpoint, array $params = [])
     {
-        $params['key'] = $this->apiKey;
+        $accessToken = $this->oauthService->getValidAccessToken();
+        
+        if (!$accessToken) {
+            throw new \Exception("No valid Enphase access token available");
+        }
 
         return Http::timeout(30)
             ->withHeaders([
+                'Authorization' => 'Bearer ' . $accessToken,
                 'Accept' => 'application/json',
+                'key' => $this->apiKey, // Enphase also requires the API key
             ])
             ->get($this->baseUrl . $endpoint, $params);
     }
