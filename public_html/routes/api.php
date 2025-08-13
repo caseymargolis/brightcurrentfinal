@@ -19,35 +19,17 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// OAuth callback routes
-Route::get('/enphase/callback', function (Request $request) {
-    $code = $request->get('code');
-    $state = $request->get('state');
+// OAuth routes
+Route::prefix('oauth')->group(function () {
+    // Authorization URL endpoints
+    Route::get('/enphase/auth', [OAuthController::class, 'enphaseAuth'])->name('oauth.enphase.auth');
+    Route::get('/tesla/auth', [OAuthController::class, 'teslaAuth'])->name('oauth.tesla.auth');
     
-    if (!$code) {
-        return response()->json(['error' => 'Authorization code not provided'], 400);
-    }
-    
-    return response()->json([
-        'message' => 'Enphase OAuth callback received successfully!',
-        'code' => $code,
-        'state' => $state,
-        'instructions' => 'Copy the code above and use it in the authentication command.'
-    ]);
-})->name('enphase.callback');
+    // OAuth callback endpoints
+    Route::get('/enphase/callback', [OAuthController::class, 'enphaseCallback'])->name('oauth.enphase.callback');
+    Route::get('/tesla/callback', [OAuthController::class, 'teslaCallback'])->name('oauth.tesla.callback');
+});
 
-Route::get('/tesla/callback', function (Request $request) {
-    $code = $request->get('code');
-    $state = $request->get('state');
-    
-    if (!$code) {
-        return response()->json(['error' => 'Authorization code not provided'], 400);
-    }
-    
-    return response()->json([
-        'message' => 'Tesla OAuth callback received successfully!',
-        'code' => $code,
-        'state' => $state,
-        'instructions' => 'Copy the code above and use it in the authentication command.'
-    ]);
-})->name('tesla.callback');
+// Legacy callback routes (for backward compatibility)
+Route::get('/enphase/callback', [OAuthController::class, 'enphaseCallback'])->name('enphase.callback');
+Route::get('/tesla/callback', [OAuthController::class, 'teslaCallback'])->name('tesla.callback');
