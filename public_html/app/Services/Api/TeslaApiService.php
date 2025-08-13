@@ -153,11 +153,13 @@ class TeslaApiService
     public function getEnergySites()
     {
         try {
-            if (!$this->accessToken) {
+            $accessToken = $this->getAccessToken();
+            
+            if (!$accessToken) {
                 return [];
             }
 
-            $response = $this->makeRequest('/energy_sites');
+            $response = $this->makeRequest('/api/1/energy_sites', [], $accessToken);
             
             if ($response->successful()) {
                 return $response->json()['response'] ?? [];
@@ -171,14 +173,19 @@ class TeslaApiService
     }
 
     /**
-     * Authenticate with Tesla API (OAuth flow)
-     * This would need to be implemented based on Tesla's OAuth requirements
+     * Initiate Tesla OAuth authentication
      */
-    public function authenticate($email, $password)
+    public function initiateAuthentication()
     {
-        // TODO: Implement Tesla OAuth authentication
-        // This is a complex process that requires handling multiple steps
-        throw new \Exception("Tesla authentication not yet implemented");
+        return $this->oauthService->getAuthorizationUrl();
+    }
+
+    /**
+     * Handle OAuth callback
+     */
+    public function handleCallback($code)
+    {
+        return $this->oauthService->exchangeCodeForTokens($code);
     }
 
     /**
