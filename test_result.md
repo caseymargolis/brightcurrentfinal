@@ -253,29 +253,37 @@ HTTP Status: 401
 
 ## Known Issues
 
-### 1. SolarEdge API Authentication (EXPECTED IN DEMO)
-- **Issue:** 403 Forbidden error when testing API connection
-- **Root Cause:** Demo API key is invalid/expired (expected behavior)
+### 1. SolarEdge API Authentication (CRITICAL - REAL CREDENTIALS FAILING)
+- **Issue:** HTTP 403 Forbidden error with real API key: PSJJ158A7XWN4OC7LOJV1SD95WMDZE5C
+- **Root Cause:** API key appears to be invalid, expired, or lacks proper permissions
 - **Impact:** Cannot fetch live solar production data from SolarEdge systems
-- **Status:** WORKING AS EXPECTED - Error handling is proper
-- **Solution for Production:** Valid API key with proper permissions + Site ID configuration
+- **Status:** CRITICAL - Real credentials provided but still failing
+- **Solution Required:** 
+  1. Verify API key validity with SolarEdge support
+  2. Check account permissions and access levels
+  3. Ensure API key has site access permissions
+  4. Confirm account is not suspended or restricted
 
-### 2. Enphase API Authentication (EXPECTED IN DEMO)
-- **Issue:** OAuth 2.0 authentication required
-- **Root Cause:** Demo environment doesn't have valid OAuth tokens (expected behavior)
-- **Impact:** Cannot fetch live solar production data from Enphase systems
-- **Status:** WORKING AS EXPECTED - OAuth implementation is complete
-- **Solution for Production:** Complete OAuth 2.0 flow with client credentials
+### 2. Enphase API OAuth Implementation (CRITICAL - ARCHITECTURE ISSUE)
+- **Issue:** "Unauthorized grant type: password" error (HTTP 401)
+- **Root Cause:** Enphase API v4 no longer supports password grant type in OAuth 2.0
+- **Impact:** Cannot authenticate with Enphase API using current implementation
+- **Status:** CRITICAL - Implementation needs complete redesign
+- **Solution Required:** 
+  1. Implement Authorization Code Grant flow for user-based authentication
+  2. OR implement Client Credentials Grant for server-to-server authentication
+  3. Update EnphaseOAuthService to use supported grant types
+  4. Modify authentication commands to handle new OAuth flow
 
-### 3. Tesla API Integration (EXPECTED IN DEMO)
-- **Issue:** OAuth authentication required
-- **Root Cause:** Demo environment doesn't have valid OAuth tokens (expected behavior)
+### 3. Tesla API OAuth (READY - AUTHENTICATION NEEDED)
+- **Issue:** OAuth authentication required but implementation is complete
+- **Root Cause:** No access tokens available (expected for new setup)
 - **Impact:** Cannot fetch live solar production data from Tesla systems
-- **Status:** WORKING AS EXPECTED - OAuth implementation is ready
-- **Solution for Production:** Complete Tesla OAuth 2.0 authentication flow
+- **Status:** READY - Implementation complete, just needs authentication
+- **Solution:** Run interactive authentication: `php artisan tesla:authenticate`
 
-### 4. No Critical Issues Found
-- All core application functionality is working perfectly
+### 4. No Critical Core Application Issues
+- All Laravel core functionality is working perfectly
 - Database operations are fully functional
 - Queue system is operational
 - Command-line tools are working correctly
