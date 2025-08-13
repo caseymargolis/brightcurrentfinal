@@ -197,25 +197,29 @@ class TeslaApiService
             if (empty($this->clientId) || empty($this->clientSecret)) {
                 return [
                     'success' => false,
-                    'message' => 'Tesla API credentials not configured',
-                    'details' => null
+                    'message' => 'Tesla API credentials not configured. Please add valid TESLA_CLIENT_ID and TESLA_CLIENT_SECRET to your .env file.',
+                    'details' => [
+                        'client_id_configured' => !empty($this->clientId),
+                        'client_secret_configured' => !empty($this->clientSecret)
+                    ],
+                    'guidance' => 'Get your Tesla credentials from https://developer.tesla.com/en_US/dashboard'
                 ];
             }
 
-            if (!$this->accessToken) {
+            $accessToken = $this->getAccessToken();
+            
+            if (!$accessToken) {
+                $authStatus = $this->oauthService->getAuthorizationStatus();
                 return [
                     'success' => false,
-                    'message' => 'Tesla API access token not available. Authentication required.',
-                    'details' => [
-                        'client_id_configured' => !empty($this->clientId),
-                        'client_secret_configured' => !empty($this->clientSecret),
-                        'access_token_cached' => !empty(cache('tesla_access_token'))
-                    ]
+                    'message' => 'Tesla API access token not available. OAuth authentication required.',
+                    'details' => $authStatus,
+                    'guidance' => 'Complete OAuth authentication flow using: php artisan tesla:authenticate'
                 ];
             }
 
             // Test with a simple energy sites request
-            $response = $this->makeRequest('/energy_sites');
+            $response = $this->makeRequest('/api/1/energy_sites', [], $accessToken);
             
             if ($response->successful()) {
                 $data = $response->json();
@@ -226,19 +230,23 @@ class TeslaApiService
                     'message' => "Successfully connected to Tesla API. Found {$siteCount} energy sites.",
                     'details' => [
                         'site_count' => $siteCount,
-                        'response_time_ms' => $response->transferStats?->getTransferTime() * 1000,
-                        'authenticated' => true
+                        'authenticated' => true,
+                        'token_valid' => true
                     ]
                 ];
             } else {
+                $statusCode = $response->status();
+                $errorBody = $response->json();
+                
                 return [
                     'success' => false,
-                    'message' => 'Tesla API request failed: ' . $response->status() . ' ' . $response->reason(),
+                    'message' => 'Tesla API request failed: ' . $statusCode . ' - ' . ($errorBody['error'] ?? 'Unknown error'),
                     'details' => [
-                        'status_code' => $response->status(),
-                        'response_body' => $response->body(),
-                        'authenticated' => true
-                    ]
+                        'status_code' => $statusCode,
+                        'response_body' => $errorBody,
+                        'authenticated' => $statusCode !== 401
+                    ],
+                    'guidance' => $statusCode === 401 ? 'Re-authenticate using: php artisan tesla:authenticate' : 'Check Tesla API status'
                 ];
             }
         } catch (\Exception $e) {
@@ -247,7 +255,7 @@ class TeslaApiService
                 'message' => 'Tesla API connection error: ' . $e->getMessage(),
                 'details' => [
                     'exception' => get_class($e),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => substr($e->getTraceAsString(), 0, 500)
                 ]
             ];
         }
