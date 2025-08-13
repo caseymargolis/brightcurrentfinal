@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 class SolarMonitoringTester:
-    def __init__(self, base_url="http://localhost:8000"):
+    def __init__(self, base_url="http://localhost:8001"):
         self.base_url = base_url
         self.session = requests.Session()
         self.csrf_token = None
