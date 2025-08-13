@@ -25,7 +25,8 @@ return [
     'tesla' => [
         'client_id' => env('TESLA_CLIENT_ID', 'edaaa5a3-6a84-4608-9b30-da0c1dfe759a'),
         'client_secret' => env('TESLA_CLIENT_SECRET', 'ta-secret.uiQpnhishNTD4j%7'),
-        'base_url' => env('TESLA_BASE_URL', 'https://owner-api.teslamotors.com/api/1'),
+        'redirect_uri' => env('TESLA_REDIRECT_URI', 'http://localhost:8001/api/tesla/callback'),
+        'base_url' => env('TESLA_BASE_URL', 'https://fleet-api.prd.na.vn.cloud.tesla.com'),
     ],
 
     'weather' => [
