@@ -32,6 +32,7 @@ class EnphaseOAuthService
                     'Authorization' => 'Basic ' . $credentials,
                     'Content-Type' => 'application/x-www-form-urlencoded',
                 ])
+                ->asForm() // This ensures form encoding
                 ->post($this->baseUrl . '/oauth/token', [
                     'grant_type' => 'password',
                     'username' => $username,
@@ -58,7 +59,8 @@ class EnphaseOAuthService
                 return [
                     'success' => false,
                     'message' => $error['error_description'] ?? $error['error'] ?? 'Authentication failed',
-                    'status_code' => $response->status()
+                    'status_code' => $response->status(),
+                    'response_body' => $response->body()
                 ];
             }
         } catch (\Exception $e) {
