@@ -42,6 +42,16 @@ class TestApiConnections extends Command
         $weatherResult = $weatherService->testConnection();
         $this->displayResult('Weather API', $weatherResult);
 
+        $this->info('⚡ Testing SolarEdge API...');
+        $solarEdgeService = new \App\Services\Api\SolarEdgeApiService();
+        $solarEdgeResult = $solarEdgeService->testConnection();
+        $this->displayResult('SolarEdge API', $solarEdgeResult);
+
+        $this->info('🔆 Testing Enphase API...');
+        $enphaseService = new \App\Services\Api\EnphaseApiService();
+        $enphaseResult = $enphaseService->testConnection();
+        $this->displayResult('Enphase API', $enphaseResult);
+
         $this->info('🚗 Testing Tesla API...');
         $teslaService = new \App\Services\Api\TeslaApiService();
         $teslaResult = $teslaService->testConnection();
