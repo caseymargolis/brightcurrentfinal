@@ -18,7 +18,7 @@ class ShowLoginCredentials extends Command
         }
 
         $this->info('🔐 Available Login Credentials for Solar Monitoring App');
-        $this->info('=' * 60);
+        $this->info(str_repeat('=', 60));
         
         $users = User::all(['id', 'name', 'email']);
         
