@@ -3,6 +3,7 @@
 namespace App\Services\Api;
 
 use App\Models\System;
+use App\Services\Api\EnphaseOAuthService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
