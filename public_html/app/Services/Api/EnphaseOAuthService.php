@@ -94,6 +94,7 @@ class EnphaseOAuthService
                     'Authorization' => 'Basic ' . $credentials,
                     'Content-Type' => 'application/x-www-form-urlencoded',
                 ])
+                ->asForm() // This ensures form encoding
                 ->post($this->baseUrl . '/oauth/token', [
                     'grant_type' => 'refresh_token',
                     'refresh_token' => $refreshToken,
@@ -123,7 +124,8 @@ class EnphaseOAuthService
                 return [
                     'success' => false,
                     'message' => 'Token refresh failed',
-                    'status_code' => $response->status()
+                    'status_code' => $response->status(),
+                    'response_body' => $response->body()
                 ];
             }
         } catch (\Exception $e) {
