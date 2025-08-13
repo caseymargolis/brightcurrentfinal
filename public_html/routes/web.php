@@ -15,6 +15,100 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 
+// OAuth callback routes for external access
+Route::get('/enphase/callback', function (Request $request) {
+    $code = $request->get('code');
+    $state = $request->get('state');
+    $error = $request->get('error');
+    
+    if ($error) {
+        return response()->json([
+            'success' => false,
+            'error' => $error,
+            'message' => 'Authentication failed. Please try again.'
+        ], 400);
+    }
+    
+    if (!$code) {
+        return response()->json([
+            'success' => false,
+            'error' => 'missing_code',
+            'message' => 'Authorization code not provided'
+        ], 400);
+    }
+    
+    // Try to exchange code for tokens
+    try {
+        $oauthService = new \App\Services\Api\EnphaseOAuthService();
+        $result = $oauthService->exchangeCodeForTokens($code);
+        
+        if ($result['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => '🎉 Enphase authentication successful! Your account has been connected.',
+                'code' => $code,
+                'instructions' => 'You can now close this page and test your solar data.'
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token exchange failed: ' . $result['message'],
+                'code_received' => $code,
+                'instructions' => 'You can use this code manually with the artisan command.'
+            ], 400);
+        }
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Authentication failed: ' . $e->getMessage(),
+            'code_received' => $code,
+            'instructions' => 'You can use this code manually with the artisan command.'
+        ], 500);
+    }
+})->name('web.enphase.callback');
+
+Route::get('/tesla/callback', function (Request $request) {
+    $code = $request->get('code');
+    $state = $request->get('state');
+    $error = $request->get('error');
+    
+    if ($error) {
+        return response()->json([
+            'success' => false,
+            'error' => $error,
+            'message' => 'Authentication failed. Please try again.'
+        ], 400);
+    }
+    
+    if (!$code) {
+        return response()->json([
+            'success' => false,
+            'error' => 'missing_code',
+            'message' => 'Authorization code not provided'
+        ], 400);
+    }
+    
+    // Try to exchange code for tokens
+    try {
+        $oauthService = new \App\Services\Api\TeslaOAuthService();
+        $tokens = $oauthService->exchangeCodeForTokens($code);
+        
+        return response()->json([
+            'success' => true,
+            'message' => '🎉 Tesla authentication successful! Your account has been connected.',
+            'code' => $code,
+            'instructions' => 'You can now close this page and test your solar data.'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Authentication failed: ' . $e->getMessage(),
+            'code_received' => $code,
+            'instructions' => 'You can use this code manually with the artisan command.'
+        ], 500);
+    }
+})->name('web.tesla.callback');
+
 // Dashboard routes
 Route::group(['prefix' => 'dashboard','middleware' => 'auth'], function() {
     Route::get('cache-clear', function () {
