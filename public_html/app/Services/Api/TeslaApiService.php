@@ -3,6 +3,7 @@
 namespace App\Services\Api;
 
 use App\Models\System;
+use App\Services\Api\TeslaOAuthService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -12,14 +13,14 @@ class TeslaApiService
     protected $clientId;
     protected $clientSecret;
     protected $baseUrl;
-    protected $accessToken;
+    protected $oauthService;
 
     public function __construct()
     {
         $this->clientId = config('solar.tesla.client_id');
         $this->clientSecret = config('solar.tesla.client_secret');
-        $this->baseUrl = 'https://owner-api.teslamotors.com/api/1';
-        $this->accessToken = $this->getAccessToken();
+        $this->baseUrl = 'https://fleet-api.prd.na.vn.cloud.tesla.com';
+        $this->oauthService = new TeslaOAuthService();
     }
 
     /**
