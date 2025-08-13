@@ -26,7 +26,7 @@ return [
     'tesla' => [
         'client_id' => env('TESLA_CLIENT_ID', 'edaaa5a3-6a84-4608-9b30-da0c1dfe759a'),
         'client_secret' => env('TESLA_CLIENT_SECRET', 'ta-secret.uiQpnhishNTD4j%7'),
-        'redirect_uri' => env('TESLA_REDIRECT_URI', 'https://demobackend.emergentagent.com/api/tesla/callback'),
+        'redirect_uri' => env('TESLA_REDIRECT_URI', 'https://demobackend.emergentagent.com/tesla/callback'),
         'base_url' => env('TESLA_BASE_URL', 'https://fleet-api.prd.na.vn.cloud.tesla.com'),
     ],
 
