@@ -24,6 +24,12 @@ class Kernel extends ConsoleKernel
                 ->withoutOverlapping()
                 ->appendOutputTo(storage_path('logs/queue-processing.log'));
 
+        // Monitor system health every hour
+        $schedule->command('solar:monitor-health')
+                ->hourly()
+                ->withoutOverlapping()
+                ->appendOutputTo(storage_path('logs/health-monitoring.log'));
+
         // Clean up old production data (keep last 90 days)
         $schedule->call(function () {
             \App\Models\ProductionData::where('created_at', '<', now()->subDays(90))->delete();
