@@ -173,7 +173,8 @@ class SolarEdgeApiService
             if (empty($this->apiKey) || $this->apiKey === 'demo_key_12345') {
                 return [
                     'success' => false,
-                    'message' => 'SolarEdge API key not configured. Please add a valid SOLAREDGE_API_KEY to your .env file.'
+                    'message' => 'SolarEdge API key not configured. Please add a valid SOLAREDGE_API_KEY to your .env file.',
+                    'guidance' => 'To get your SolarEdge API key: 1) Log into monitoring.solaredge.com 2) Go to Admin → Site Access → Access Control 3) Generate new API key under API Access section'
                 ];
             }
 
@@ -181,22 +182,59 @@ class SolarEdgeApiService
             
             if ($response->successful()) {
                 $data = $response->json();
-                $siteCount = isset($data['sites']) ? count($data['sites']) : 0;
+                $sites = $data['sites']['site'] ?? [];
+                $siteCount = count($sites);
+                
+                $message = "Successfully connected to SolarEdge API. Found {$siteCount} accessible sites.";
+                if ($siteCount > 0) {
+                    $siteIds = array_column($sites, 'id');
+                    $message .= " Site IDs: " . implode(', ', array_slice($siteIds, 0, 3));
+                    if (count($siteIds) > 3) {
+                        $message .= " (and " . (count($siteIds) - 3) . " more)";
+                    }
+                }
+                
                 return [
                     'success' => true,
-                    'message' => "Successfully connected to SolarEdge API. Found {$siteCount} accessible sites."
+                    'message' => $message,
+                    'details' => [
+                        'site_count' => $siteCount,
+                        'available_sites' => array_slice($sites, 0, 5), // First 5 sites for reference
+                        'api_key_status' => 'valid'
+                    ]
                 ];
             } else {
-                $error = $response->json()['String'] ?? 'Unknown error';
+                $statusCode = $response->status();
+                $errorBody = $response->json();
+                $error = $errorBody['message'] ?? $errorBody['String'] ?? 'Unknown error';
+                
+                $message = "SolarEdge API authentication failed (HTTP {$statusCode}): {$error}";
+                
+                if ($statusCode === 403) {
+                    $message .= ". This usually means your API key is invalid, expired, or doesn't have permission to access this endpoint.";
+                } elseif ($statusCode === 401) {
+                    $message .= ". This usually means your API key is missing or incorrectly formatted.";
+                }
+                
                 return [
                     'success' => false,
-                    'message' => "SolarEdge API authentication failed: {$error}. Please verify your API key has proper permissions."
+                    'message' => $message,
+                    'details' => [
+                        'status_code' => $statusCode,
+                        'error_response' => $errorBody,
+                        'api_key_provided' => !empty($this->apiKey)
+                    ],
+                    'guidance' => 'Please verify: 1) Your API key is correct 2) You have admin access to your SolarEdge account 3) The API key has proper permissions for site access'
                 ];
             }
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => "SolarEdge API connection error: " . $e->getMessage()
+                'message' => "SolarEdge API connection error: " . $e->getMessage(),
+                'details' => [
+                    'exception' => get_class($e),
+                    'trace' => substr($e->getTraceAsString(), 0, 500)
+                ]
             ];
         }
     }
