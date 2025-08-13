@@ -88,14 +88,14 @@ class MonitorSystemHealth extends Command
     {
         // Check if we already have this alert in the last 24 hours to avoid spam
         $existingAlert = Alert::where('system_id', $system->id)
-            ->where('type', $type)
+            ->where('alert_type', $type)
             ->where('created_at', '>=', now()->subHours(24))
             ->first();
 
         if (!$existingAlert) {
             Alert::create([
                 'system_id' => $system->id,
-                'type' => $type,
+                'alert_type' => $type,
                 'message' => $message,
                 'severity' => $severity,
                 'status' => 'open',
