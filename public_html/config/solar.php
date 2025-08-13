@@ -14,6 +14,7 @@ return [
         'api_key' => env('ENPHASE_API_KEY', 'ff758cebecf04e6acb7936e10c7acdd6'),
         'client_id' => env('ENPHASE_CLIENT_ID', '57a5960f4e42911bf87e814b4112bbce'),
         'client_secret' => env('ENPHASE_CLIENT_SECRET', '818fe4b0c56be49de5b08fd54239405a'),
+        'redirect_uri' => env('ENPHASE_REDIRECT_URI', 'http://localhost:8001/api/enphase/callback'),
         'base_url' => env('ENPHASE_BASE_URL', 'https://api.enphaseenergy.com/api/v4'),
     ],
 
