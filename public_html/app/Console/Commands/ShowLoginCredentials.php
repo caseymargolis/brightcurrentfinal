@@ -67,7 +67,7 @@ class ShowLoginCredentials extends Command
 
         $this->newLine();
         $this->info('🔐 Test User Login Credentials:');
-        $this->info('=' * 40);
+        $this->info(str_repeat('=', 40));
         $this->line("👤 Name: Test User");
         $this->line("📧 Email: {$email}");
         $this->line("🔑 Password: {$password}");
