@@ -152,37 +152,98 @@ class EnphaseApiService
     public function testConnection()
     {
         try {
-            if (empty($this->apiKey) || $this->apiKey === 'demo_key_67890') {
+            if (!$this->oauthService->hasValidCredentials()) {
                 return [
                     'success' => false,
-                    'message' => 'Enphase API key not configured. Please add valid ENPHASE_API_KEY, ENPHASE_CLIENT_ID, and ENPHASE_CLIENT_SECRET to your .env file.'
+                    'message' => 'Enphase OAuth credentials not configured. Please add valid ENPHASE_CLIENT_ID and ENPHASE_CLIENT_SECRET to your .env file.',
+                    'guidance' => 'To get Enphase credentials: 1) Register at developer-v4.enphase.com 2) Create a Partner application 3) Get Client ID, Client Secret, and API Key'
                 ];
             }
 
-            // For Enphase, we need OAuth authentication, not just an API key
-            // This is a simplified test - in production, you'd need proper OAuth flow
+            if (empty($this->apiKey)) {
+                return [
+                    'success' => false,
+                    'message' => 'Enphase API key not configured. Please add valid ENPHASE_API_KEY to your .env file.',
+                    'guidance' => 'The API key is provided along with your OAuth credentials in the Enphase developer portal.'
+                ];
+            }
+
+            // Check if we have a valid access token
+            $accessToken = $this->oauthService->getValidAccessToken();
+            
+            if (!$accessToken) {
+                return [
+                    'success' => false,
+                    'message' => 'No valid Enphase access token available. OAuth authentication required.',
+                    'details' => [
+                        'credentials_configured' => true,
+                        'access_token_cached' => false,
+                        'refresh_token_available' => !empty(\Illuminate\Support\Facades\Cache::get('enphase_refresh_token'))
+                    ],
+                    'guidance' => 'Run the OAuth authentication process: php artisan enphase:authenticate --username=your_email --password=your_password'
+                ];
+            }
+
+            // Test API connection with systems endpoint
             $response = $this->makeRequest('/systems');
             
             if ($response->successful()) {
                 $data = $response->json();
-                $systemCount = is_array($data) ? count($data) : 0;
+                $systemCount = count($data['systems'] ?? []);
+                
                 return [
                     'success' => true,
-                    'message' => "Successfully connected to Enphase API. Found {$systemCount} accessible systems."
+                    'message' => "Successfully connected to Enphase API. Found {$systemCount} accessible systems.",
+                    'details' => [
+                        'system_count' => $systemCount,
+                        'authenticated' => true,
+                        'api_key_valid' => true,
+                        'access_token_valid' => true
+                    ]
                 ];
             } else {
+                $statusCode = $response->status();
                 $errorData = $response->json();
-                $errorMessage = $errorData['message'] ?? 'Authentication failed';
+                $errorMessage = $errorData['message'] ?? $errorData['error'] ?? 'Authentication failed';
+                
+                $message = "Enphase API request failed (HTTP {$statusCode}): {$errorMessage}";
+                
+                if ($statusCode === 401) {
+                    $message .= ". Access token may be expired or invalid.";
+                    // Clear the token so it can be refreshed on next attempt
+                    $this->oauthService->clearTokens();
+                } elseif ($statusCode === 403) {
+                    $message .= ". This usually means insufficient permissions or rate limit exceeded.";
+                }
+                
                 return [
                     'success' => false,
-                    'message' => "Enphase API authentication failed: {$errorMessage}. Enphase requires OAuth 2.0 authentication. Please ensure your credentials are properly configured and authorized."
+                    'message' => $message,
+                    'details' => [
+                        'status_code' => $statusCode,
+                        'error_response' => $errorData,
+                        'authenticated' => $statusCode !== 401
+                    ],
+                    'guidance' => $statusCode === 401 ? 'Re-run OAuth authentication or check if your Enphase account credentials are correct.' : 'Check your API permissions and rate limits.'
                 ];
             }
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => "Enphase API connection error: " . $e->getMessage()
+                'message' => "Enphase API connection error: " . $e->getMessage(),
+                'details' => [
+                    'exception' => get_class($e),
+                    'trace' => substr($e->getTraceAsString(), 0, 500)
+                ]
             ];
         }
+    }
+
+    /**
+     * Authenticate with Enphase API using username/password
+     */
+    public function authenticate($username, $password)
+    {
+        return $this->oauthService->getAccessToken($username, $password);
     }
 }
