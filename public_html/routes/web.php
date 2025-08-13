@@ -13,9 +13,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [LandingController::class, 'index'])->name('landing');
 
 // Dashboard routes
 Route::group(['prefix' => 'dashboard','middleware' => 'auth'], function() {
