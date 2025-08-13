@@ -113,35 +113,23 @@ class TeslaApiService
     }
 
     /**
-     * Get access token for Tesla API
+     * Get access token for Tesla API using OAuth
      */
     protected function getAccessToken()
     {
-        try {
-            // For production, you'll need to implement proper OAuth flow
-            // This is a simplified version
-            $cachedToken = cache('tesla_access_token');
-            
-            if ($cachedToken) {
-                return $cachedToken;
-            }
-
-            // In a real implementation, you'd refresh the token here
-            // For now, return null and handle authentication separately
-            return null;
-
-        } catch (\Exception $e) {
-            Log::error("Failed to get Tesla access token: " . $e->getMessage());
-            return null;
-        }
+        return $this->oauthService->getValidAccessToken();
     }
 
     /**
      * Make authenticated request to Tesla API
      */
-    protected function makeRequest(string $endpoint, array $params = [])
+    protected function makeRequest(string $endpoint, array $params = [], string $accessToken = null)
     {
-        if (!$this->accessToken) {
+        if (!$accessToken) {
+            $accessToken = $this->getAccessToken();
+        }
+
+        if (!$accessToken) {
             throw new \Exception("No valid Tesla access token");
         }
 
@@ -153,7 +141,7 @@ class TeslaApiService
 
         return Http::timeout(30)
             ->withHeaders([
-                'Authorization' => 'Bearer ' . $this->accessToken,
+                'Authorization' => 'Bearer ' . $accessToken,
                 'Accept' => 'application/json',
             ])
             ->get($url);
