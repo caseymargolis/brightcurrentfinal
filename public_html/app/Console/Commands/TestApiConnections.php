@@ -71,6 +71,16 @@ class TestApiConnections extends Command
                 $result = $service->testConnection();
                 $this->displayResult('Weather API', $result);
                 break;
+            case 'solaredge':
+                $service = new \App\Services\Api\SolarEdgeApiService();
+                $result = $service->testConnection();
+                $this->displayResult('SolarEdge API', $result);
+                break;
+            case 'enphase':
+                $service = new \App\Services\Api\EnphaseApiService();
+                $result = $service->testConnection();
+                $this->displayResult('Enphase API', $result);
+                break;
             case 'tesla':
                 $service = new \App\Services\Api\TeslaApiService();
                 $result = $service->testConnection();
