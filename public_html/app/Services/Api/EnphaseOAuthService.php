@@ -181,24 +181,26 @@ class EnphaseOAuthService
     }
 
     /**
-     * Get valid access token (with automatic refresh if needed)
+     * Get a valid access token
      */
     public function getValidAccessToken()
     {
         $accessToken = Cache::get('enphase_access_token');
-        
-        if ($accessToken) {
-            return $accessToken;
+        $expiresAt = Cache::get('enphase_token_expires_at');
+
+        // Check if token is expired or will expire in next 5 minutes
+        if (!$accessToken || !$expiresAt || $expiresAt <= (time() + 300)) {
+            try {
+                $tokens = $this->refreshAccessToken();
+                if ($tokens['success']) {
+                    return $tokens['access_token'];
+                }
+            } catch (\Exception $e) {
+                Log::warning('Enphase token refresh failed: ' . $e->getMessage());
+            }
         }
 
-        // Try to refresh token
-        $refreshResult = $this->refreshAccessToken();
-        
-        if ($refreshResult['success']) {
-            return $refreshResult['access_token'];
-        }
-
-        return null;
+        return $accessToken;
     }
 
     /**
@@ -208,6 +210,7 @@ class EnphaseOAuthService
     {
         Cache::forget('enphase_access_token');
         Cache::forget('enphase_refresh_token');
+        Cache::forget('enphase_token_expires_at');
     }
 
     /**
@@ -216,5 +219,35 @@ class EnphaseOAuthService
     public function hasValidCredentials()
     {
         return !empty($this->clientId) && !empty($this->clientSecret);
+    }
+
+    /**
+     * Get authorization status
+     */
+    public function getAuthorizationStatus()
+    {
+        return [
+            'credentials_configured' => $this->hasValidCredentials(),
+            'access_token_cached' => !empty(Cache::get('enphase_access_token')),
+            'refresh_token_cached' => !empty(Cache::get('enphase_refresh_token')),
+            'token_expires_at' => Cache::get('enphase_token_expires_at'),
+            'token_valid' => !empty($this->getValidAccessToken())
+        ];
+    }
+
+    /**
+     * Initiate OAuth authentication
+     */
+    public function initiateAuthentication()
+    {
+        return $this->getAuthorizationUrl();
+    }
+
+    /**
+     * Handle OAuth callback
+     */
+    public function handleCallback($code)
+    {
+        return $this->exchangeCodeForTokens($code);
     }
 }
