@@ -29,25 +29,27 @@ class TeslaApiService
     public function getProductionData(System $system)
     {
         try {
-            if (!$this->accessToken) {
-                throw new \Exception("No valid Tesla access token available");
+            $accessToken = $this->oauthService->getValidAccessToken();
+            
+            if (!$accessToken) {
+                throw new \Exception("No valid Tesla access token available. OAuth authentication required.");
             }
 
             // Get energy site status
-            $statusResponse = $this->makeRequest("/energy_sites/{$system->external_system_id}/live_status");
+            $statusResponse = $this->makeRequest("/api/1/energy_sites/{$system->external_system_id}/live_status", [], $accessToken);
             
             if (!$statusResponse->successful()) {
-                throw new \Exception("Failed to fetch Tesla energy site status");
+                throw new \Exception("Failed to fetch Tesla energy site status: " . $statusResponse->body());
             }
 
             $status = $statusResponse->json()['response'] ?? [];
 
             // Get energy history
-            $historyResponse = $this->makeRequest("/energy_sites/{$system->external_system_id}/calendar_history", [
+            $historyResponse = $this->makeRequest("/api/1/energy_sites/{$system->external_system_id}/calendar_history", [
                 'kind' => 'energy',
-                'start_date' => now()->subDays(2)->format('Y-m-d T H:i:s'),
-                'end_date' => now()->format('Y-m-d T H:i:s'),
-            ]);
+                'start_date' => now()->subDays(2)->format('Y-m-d\TH:i:s'),
+                'end_date' => now()->format('Y-m-d\TH:i:s'),
+            ], $accessToken);
 
             $history = $historyResponse->successful() ? $historyResponse->json() : [];
 
