@@ -348,7 +348,23 @@ HTTP Status: 401
 
 ## Known Issues
 
-### 1. SolarEdge API Authentication (CRITICAL - REAL CREDENTIALS FAILING)
+### 1. Public URL Routing Issue (CRITICAL - BLOCKING OAUTH CALLBACKS)
+- **Issue:** Public callback URLs return HTTP 404 instead of processing OAuth callbacks
+- **Affected URLs:** 
+  - https://demobackend.emergentagent.com/enphase/callback → 404
+  - https://demobackend.emergentagent.com/tesla/callback → 404
+  - https://demobackend.emergentagent.com/ → 404
+- **Root Cause:** Web server configuration not routing requests to Laravel application
+- **Impact:** OAuth authentication cannot complete - external services cannot reach callback URLs
+- **Status:** CRITICAL - Blocks OAuth authentication flows
+- **Local Testing:** ✅ All callback routes work perfectly on localhost:8001
+- **Solution Required:** 
+  1. Configure web server (Nginx/Apache) to properly route requests to Laravel
+  2. Verify SSL/HTTPS configuration for the public domain
+  3. Check Laravel route caching on production server
+  4. Ensure public domain DNS points to correct server
+
+### 2. SolarEdge API Authentication (CRITICAL - REAL CREDENTIALS FAILING)
 - **Issue:** HTTP 403 Forbidden error with real API key: PSJJ158A7XWN4OC7LOJV1SD95WMDZE5C
 - **Root Cause:** API key appears to be invalid, expired, or lacks proper permissions
 - **Impact:** Cannot fetch live solar production data from SolarEdge systems
@@ -359,23 +375,21 @@ HTTP Status: 401
   3. Ensure API key has site access permissions
   4. Confirm account is not suspended or restricted
 
-### 2. Enphase API OAuth Implementation (CRITICAL - ARCHITECTURE ISSUE)
-- **Issue:** "Unauthorized grant type: password" error (HTTP 401)
-- **Root Cause:** Enphase API v4 no longer supports password grant type in OAuth 2.0
-- **Impact:** Cannot authenticate with Enphase API using current implementation
-- **Status:** CRITICAL - Implementation needs complete redesign
-- **Solution Required:** 
-  1. Implement Authorization Code Grant flow for user-based authentication
-  2. OR implement Client Credentials Grant for server-to-server authentication
-  3. Update EnphaseOAuthService to use supported grant types
-  4. Modify authentication commands to handle new OAuth flow
-
-### 3. Tesla API OAuth (READY - AUTHENTICATION NEEDED)
-- **Issue:** OAuth authentication required but implementation is complete
+### 3. Enphase API OAuth (READY - AWAITING USER AUTHORIZATION)
+- **Issue:** OAuth authentication ready but requires user to complete authorization flow
 - **Root Cause:** No access tokens available (expected for new setup)
-- **Impact:** Cannot fetch live solar production data from Tesla systems
-- **Status:** READY - Implementation complete, just needs authentication
-- **Solution:** Run interactive authentication: `php artisan tesla:authenticate`
+- **Impact:** Cannot fetch live solar production data from Enphase systems until authorized
+- **Status:** READY - Implementation complete, awaiting user authorization
+- **Solution:** User needs to visit generated authorization URL and complete OAuth flow
+- **Implementation:** ✅ Complete Authorization Code Grant flow implemented
+
+### 4. Tesla API OAuth (READY - AWAITING USER AUTHORIZATION)
+- **Issue:** OAuth authentication ready but requires user to complete authorization flow
+- **Root Cause:** No access tokens available (expected for new setup)
+- **Impact:** Cannot fetch live solar production data from Tesla systems until authorized
+- **Status:** READY - Implementation complete, awaiting user authorization
+- **Solution:** User needs to visit generated authorization URL and complete OAuth flow
+- **Implementation:** ✅ Complete OAuth 2.0 flow implemented with proper audience parameter
 
 ### 4. No Critical Core Application Issues
 - All Laravel core functionality is working perfectly
