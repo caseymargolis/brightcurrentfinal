@@ -11,6 +11,7 @@ use App\Http\Controllers\SolarApiController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing');
